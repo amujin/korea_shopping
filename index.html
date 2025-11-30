@@ -21,9 +21,9 @@
     max-width: 400px;
     margin: auto;
   }
-  input {
+  input[type="number"], input[type="range"] {
     width: 100%;
-    padding: 12px;
+    padding: 8px;
     margin: 10px 0;
     border-radius: 6px;
     border: 1px solid #ccc;
@@ -35,6 +35,29 @@
     padding: 15px;
     border-radius: 8px;
     font-size: 18px;
+  }
+  .button-group button {
+    padding: 10px 20px;
+    margin: 5px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    cursor: pointer;
+    font-size: 16px;
+  }
+  .button-group button.active {
+    background-color: #4CAF50;
+    color: white;
+  }
+  .small-red {
+    font-size: 12px;
+    color: red;
+    margin-top: -8px;
+    display: block;
+  }
+  .slider-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
   }
 </style>
 </head>
@@ -48,6 +71,35 @@
 
   <label>レート（₩/¥）</label>
   <input type="number" id="rate" placeholder="例: 9.5" step="0.01" oninput="calc()">
+  <span class="small-red">1円は何ウォン？</span>
+
+  <label>免税</label>
+  <div class="button-group">
+    <button id="taxYes" class="active" onclick="setTax(true)">あり</button>
+    <button id="taxNo" onclick="setTax(false)">なし</button>
+  </div>
+
+  <label>免税率 (%)</label>
+  <div class="slider-label">
+    <span>0%</span>
+    <span id="taxRateLabel">8%</span>
+    <span>20%</span>
+  </div>
+  <input type="range" id="taxRate" min="0" max="20" step="1" value="8" oninput="updateTaxRate()">
+
+  <label>カード決済</label>
+  <select id="card" onchange="calc()">
+    <option value="no">なし</option>
+    <option value="yes">あり</option>
+  </select>
+
+  <label>カード手数料 (%)</label>
+  <div class="slider-label">
+    <span>0%</span>
+    <span id="cardFeeLabel">1.5%</span>
+    <span>10%</span>
+  </div>
+  <input type="range" id="cardFee" min="0" max="10" step="0.1" value="1.5" oninput="updateCardFee()">
 
   <div class="result">
     <p>免税後：<span id="afterTax">-</span> ₩</p>
@@ -57,9 +109,31 @@
 </div>
 
 <script>
+let taxEnabled = true;
+
+function setTax(enabled) {
+  taxEnabled = enabled;
+  document.getElementById("taxYes").classList.toggle("active", enabled);
+  document.getElementById("taxNo").classList.toggle("active", !enabled);
+  calc();
+}
+
+function updateTaxRate() {
+  document.getElementById("taxRateLabel").innerText = document.getElementById("taxRate").value + "%";
+  calc();
+}
+
+function updateCardFee() {
+  document.getElementById("cardFeeLabel").innerText = document.getElementById("cardFee").value + "%";
+  calc();
+}
+
 function calc() {
   const krw = parseFloat(document.getElementById("krw").value);
   const rate = parseFloat(document.getElementById("rate").value);
+  const card = document.getElementById("card").value;
+  const cardFeePercent = parseFloat(document.getElementById("cardFee").value);
+  const taxRatePercent = parseFloat(document.getElementById("taxRate").value);
 
   if (isNaN(krw) || isNaN(rate) || rate === 0) {
     document.getElementById("afterTax").innerText = "-";
@@ -68,17 +142,26 @@ function calc() {
     return;
   }
 
-  const taxRefundRate = 0.92; // 8%割引
-  const cardFee = 0.015;      // 1.5%
+  let afterTax = krw;
+  if (taxEnabled) {
+    afterTax *= (1 - taxRatePercent / 100);
+  }
 
-  const afterTax = krw * taxRefundRate;
   const yen = afterTax / rate;
-  const final = yen * (1 + cardFee);
+
+  let final = yen;
+  if (card === "yes" && !isNaN(cardFeePercent)) {
+    final *= (1 + cardFeePercent / 100);
+  }
 
   document.getElementById("afterTax").innerText = Math.round(afterTax).toLocaleString();
   document.getElementById("yen").innerText = Math.round(yen).toLocaleString();
   document.getElementById("final").innerText = Math.round(final).toLocaleString();
 }
+
+// 初期表示
+updateTaxRate();
+updateCardFee();
 </script>
 
 </body>
