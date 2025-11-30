@@ -73,48 +73,65 @@
   <input type="number" id="rate" placeholder="例: 9.5" step="0.01" oninput="calc()">
   <span class="small-red">1円は何ウォン？</span>
 
+  <!-- 免税ボタン -->
   <label>免税</label>
   <div class="button-group">
     <button id="taxYes" class="active" onclick="setTax(true)">あり</button>
     <button id="taxNo" onclick="setTax(false)">なし</button>
   </div>
 
-  <label>免税率 (%)</label>
-  <div class="slider-label">
-    <span>0%</span>
-    <span id="taxRateLabel">8%</span>
-    <span>20%</span>
+  <!-- 免税スライダー -->
+  <div id="taxSliderContainer">
+    <label>免税率 (%)</label>
+    <div class="slider-label">
+      <span>0%</span>
+      <span id="taxRateLabel">8%</span>
+      <span>20%</span>
+    </div>
+    <input type="range" id="taxRate" min="0" max="20" step="1" value="8" oninput="updateTaxRate()">
   </div>
-  <input type="range" id="taxRate" min="0" max="20" step="1" value="8" oninput="updateTaxRate()">
 
+  <!-- カード決済ボタン -->
   <label>カード決済</label>
-  <select id="card" onchange="calc()">
-    <option value="no">なし</option>
-    <option value="yes">あり</option>
-  </select>
-
-  <label>カード手数料 (%)</label>
-  <div class="slider-label">
-    <span>0%</span>
-    <span id="cardFeeLabel">1.5%</span>
-    <span>10%</span>
+  <div class="button-group">
+    <button id="cardNo" class="active" onclick="setCard(false)">なし</button>
+    <button id="cardYes" onclick="setCard(true)">あり</button>
   </div>
-  <input type="range" id="cardFee" min="0" max="10" step="0.1" value="1.5" oninput="updateCardFee()">
+
+  <!-- カード手数料スライダー -->
+  <div id="cardSliderContainer" style="display:none">
+    <label>カード手数料 (%)</label>
+    <div class="slider-label">
+      <span>0%</span>
+      <span id="cardFeeLabel">1.5%</span>
+      <span>10%</span>
+    </div>
+    <input type="range" id="cardFee" min="0" max="10" step="0.1" value="1.5" oninput="updateCardFee()">
+  </div>
 
   <div class="result">
     <p>免税後：<span id="afterTax">-</span> ₩</p>
     <p>円換算：<span id="yen">-</span> 円</p>
-    <p><b>最終支払額（手数料込）：<span id="final">-</span> 円</b></p>
   </div>
 </div>
 
 <script>
 let taxEnabled = true;
+let cardEnabled = false;
 
 function setTax(enabled) {
   taxEnabled = enabled;
   document.getElementById("taxYes").classList.toggle("active", enabled);
   document.getElementById("taxNo").classList.toggle("active", !enabled);
+  document.getElementById("taxSliderContainer").style.display = enabled ? "block" : "none";
+  calc();
+}
+
+function setCard(enabled) {
+  cardEnabled = enabled;
+  document.getElementById("cardYes").classList.toggle("active", enabled);
+  document.getElementById("cardNo").classList.toggle("active", !enabled);
+  document.getElementById("cardSliderContainer").style.display = enabled ? "block" : "none";
   calc();
 }
 
@@ -131,14 +148,12 @@ function updateCardFee() {
 function calc() {
   const krw = parseFloat(document.getElementById("krw").value);
   const rate = parseFloat(document.getElementById("rate").value);
-  const card = document.getElementById("card").value;
-  const cardFeePercent = parseFloat(document.getElementById("cardFee").value);
   const taxRatePercent = parseFloat(document.getElementById("taxRate").value);
+  const cardFeePercent = parseFloat(document.getElementById("cardFee").value);
 
   if (isNaN(krw) || isNaN(rate) || rate === 0) {
     document.getElementById("afterTax").innerText = "-";
     document.getElementById("yen").innerText = "-";
-    document.getElementById("final").innerText = "-";
     return;
   }
 
@@ -149,17 +164,18 @@ function calc() {
 
   const yen = afterTax / rate;
 
-  let final = yen;
-  if (card === "yes" && !isNaN(cardFeePercent)) {
-    final *= (1 + cardFeePercent / 100);
+  let finalYen = yen;
+  if (cardEnabled && !isNaN(cardFeePercent)) {
+    finalYen *= (1 + cardFeePercent / 100);
   }
 
   document.getElementById("afterTax").innerText = Math.round(afterTax).toLocaleString();
-  document.getElementById("yen").innerText = Math.round(yen).toLocaleString();
-  document.getElementById("final").innerText = Math.round(final).toLocaleString();
+  document.getElementById("yen").innerText = Math.round(finalYen).toLocaleString();
 }
 
 // 初期表示
+setTax(true);
+setCard(false);
 updateTaxRate();
 updateCardFee();
 </script>
