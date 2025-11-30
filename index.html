@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>韓国ショッピング換算ツール</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    padding: 20px;
+    background: #f7f7f7;
+  }
+  h2 {
+    text-align: center;
+  }
+  .container {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    max-width: 400px;
+    margin: auto;
+  }
+  input {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 16px;
+  }
+  .result {
+    margin-top: 20px;
+    background: #eef;
+    padding: 15px;
+    border-radius: 8px;
+    font-size: 18px;
+  }
+</style>
+</head>
+<body>
+
+<h2>韓国ショッピング換算ツール</h2>
+
+<div class="container">
+  <label>ウォン価格（₩）</label>
+  <input type="number" id="krw" placeholder="例: 120000" oninput="calc()">
+
+  <label>レート（₩/¥）</label>
+  <input type="number" id="rate" placeholder="例: 9.5" step="0.01" oninput="calc()">
+
+  <div class="result">
+    <p>免税後：<span id="afterTax">-</span> ₩</p>
+    <p>円換算：<span id="yen">-</span> 円</p>
+    <p><b>最終支払額（手数料込）：<span id="final">-</span> 円</b></p>
+  </div>
+</div>
+
+<script>
+function calc() {
+  const krw = parseFloat(document.getElementById("krw").value);
+  const rate = parseFloat(document.getElementById("rate").value);
+
+  if (isNaN(krw) || isNaN(rate) || rate === 0) {
+    document.getElementById("afterTax").innerText = "-";
+    document.getElementById("yen").innerText = "-";
+    document.getElementById("final").innerText = "-";
+    return;
+  }
+
+  const taxRefundRate = 0.92; // 8%割引
+  const cardFee = 0.015;      // 1.5%
+
+  const afterTax = krw * taxRefundRate;
+  const yen = afterTax / rate;
+  const final = yen * (1 + cardFee);
+
+  document.getElementById("afterTax").innerText = Math.round(afterTax).toLocaleString();
+  document.getElementById("yen").innerText = Math.round(yen).toLocaleString();
+  document.getElementById("final").innerText = Math.round(final).toLocaleString();
+}
+</script>
+
+</body>
+</html>
